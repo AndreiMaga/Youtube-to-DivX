@@ -7,7 +7,7 @@ if not os.path.isdir(down_location):
 conv_location = location + "\\converted\\"
 if not os.path.isdir(conv_location):
     os.mkdir(conv_location)
-ffmpeg_location = location + "\\ffmpeg"
+ffmpeg_location = location + "\\ffmpeg.exe"
 
 if not os.path.exists(ffmpeg_location):
     print("FFMPEG.exe needs to be in the same folder as this script.")
