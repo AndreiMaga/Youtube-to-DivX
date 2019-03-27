@@ -24,6 +24,6 @@ Run the script by double clicking
 
 The script will then download each video in ```mp4``` format in the ```download``` folder.
 
-After the download is complete, the script will then convert each one of them to ```divx``` with ```ac3``` audio encoding, and put all the converted files in the ```converted``` folder.
+After the download is complete, the script will then convert each one of them to ```divx``` with ```mp3``` audio encoding, and put all the converted files in the ```converted``` folder.
 
 # Author Andrei Maga
