@@ -1,29 +1,35 @@
 # Youtube-to-DivX
+
 Takes a file with youtube urls and downloads them in mp4 and then coverts them in divx using ffmpeg.
 
+## Installation
 
-# Installation
-
-## Step 1
+### Step 1
 
 Download and install any ```3.X``` python versions.
 
-## Step 2
+### Step 2
+
 Run the following command in the command prompt.
+
+```bash
+pip install youtube-dl tqdm
 ```
-pip install pytube
-```
 
-## Step 3
-Download and extract ffmpeg.exe in the same folder as main.py
+### Step 3
 
-# Usage
-Create a ```.txt``` file named ```download.txt``` where you store youtube urls on each line.
+Download and extract [ffmpeg.exe](https://ffmpeg.org/) in the same directory as main.py
 
-Run the script by double clicking 
+## Usage
 
-The script will then download each video in ```mp4``` format in the ```download``` folder.
+If you know your computer is old, change the **```max_thread_count```** variable to **```1```** or **```2```**.
 
-After the download is complete, the script will then convert each one of them to ```divx``` with ```mp3``` audio encoding, and put all the converted files in the ```converted``` folder.
+Add your links in **```download.txt```** one per line.
 
-# Author Andrei Maga
+Run the script by double clicking.
+
+The script will then download each video in **```mp4```** format in the **```download```** directory.
+
+After the download is complete, the script will then convert each one of them to **```divx```** with **```mp3```** audio encoding, and put all the converted files in the **```converted```** directory. This will also delete the **```mp4```** file from the **```download```** directory.
+
+## Author Andrei Maga
