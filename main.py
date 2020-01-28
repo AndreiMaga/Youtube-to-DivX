@@ -32,7 +32,7 @@ class Thread(threading.Thread):
         out = conv_location + self.file.split(".")[0]+".divx"
         to_run = "{0} -i \"{1}\"".format(ffmpeg_location,
                                          inp) + ffmpegargs + " \"{0}\"".format(out)
-        subprocess.run(to_run, stdout=subprocess.DEVNULL,
+        subprocess.call(to_run, stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL)
         os.remove(self.file)
         self.tqd.update(1)
@@ -59,7 +59,7 @@ def convert():
 def download_from_file():
     os.chdir(down_location)
     to_run = "{} --no-playlist -a ..\\download.txt".format(youtubedl_path)
-    os.system(to_run)
+    subprocess.call(to_run)
 
 
 if __name__ == "__main__":
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     if not os.path.exists(youtubedl_path):
         print("You need to run pip install youtube-dl")
         sys.exit(1)
-
+    print("Downloading")
     download_from_file()
+    print("Converting")
     convert()
