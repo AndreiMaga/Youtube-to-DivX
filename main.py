@@ -4,7 +4,8 @@ import threading
 import subprocess
 import tqdm
 
-max_thread_count = 4
+max_FFMPEG_thread_count = 4
+max_download_thread_count = 4
 
 location = os.getcwd()
 down_location = location + "\\download\\"
@@ -19,7 +20,7 @@ youtubedl_path = '\\'.join(sys.executable.split(
     "\\")[:-1]) + "\\Scripts\\youtube-dl.exe"
 
 
-class Thread(threading.Thread):
+class FFMPEGThread(threading.Thread):
     def __init__(self, file, thread_list, tqd):
         threading.Thread.__init__(self)
         self.file = file
@@ -33,20 +34,34 @@ class Thread(threading.Thread):
         to_run = "{0} -i \"{1}\"".format(ffmpeg_location,
                                          inp) + ffmpegargs + " \"{0}\"".format(out)
         subprocess.call(to_run, stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
+                        stderr=subprocess.DEVNULL)
         os.remove(self.file)
         self.tqd.update(1)
         self.thread_list.remove(self)
 
 
-def convert():
-    files = os.listdir(down_location)
+class DownloadThread(threading.Thread):
+    def __init__(self, url, thread_list, tqd):
+        threading.Thread.__init__(self)
+        self.url = url
+        self.thread_list = thread_list
+        self.tqd = tqd
+
+    def run(self):
+        to_run = "{} --no-playlist {}".format(youtubedl_path, self.url)
+        subprocess.call(to_run, stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        self.tqd.update(1)
+        self.thread_list.remove(self)
+
+
+def run_threads(input, thread, thread_count):
     threads = []
     current_index = 0
-    tqd = tqdm.tqdm(total=len(files))
-    while len(files) > current_index:
-        if len(threads) < max_thread_count:
-            T = Thread(files[current_index], threads, tqd)
+    tqd = tqdm.tqdm(total=len(input))
+    while len(input) > current_index:
+        if len(threads) < thread_count:
+            T = thread(input[current_index], threads, tqd)
             current_index += 1
             T.start()
             threads.append(T)
@@ -56,10 +71,18 @@ def convert():
     tqd.close()
 
 
+def convert():
+    files = os.listdir(down_location)
+    run_threads(files, FFMPEGThread, max_FFMPEG_thread_count)
+
+
 def download_from_file():
     os.chdir(down_location)
-    to_run = "{} --no-playlist -a ..\\download.txt".format(youtubedl_path)
-    subprocess.call(to_run)
+    urls = []
+    with open("..\\download.txt", "r") as url_file:
+        urls = url_file.readlines()
+    urls = [url.strip("\n") for url in urls]
+    run_threads(urls, DownloadThread, max_download_thread_count)
 
 
 if __name__ == "__main__":

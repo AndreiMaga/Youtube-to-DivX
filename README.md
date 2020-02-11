@@ -22,11 +22,11 @@ Download and extract [ffmpeg.exe](https://ffmpeg.org/) in the same directory as 
 
 ## Usage
 
-If you know your computer is old, change the **```max_thread_count```** variable to **```1```** or **```2```**.
+If you know your computer is old, change the **```max_..._thread_count```** variables to **```1```** or **```2```**.
 
 Add your links in **```download.txt```** one per line.
 
-Run the script by double clicking.
+Run the script.
 
 The script will then download each video in **```mp4```** format in the **```download```** directory.
 
