@@ -1,6 +1,6 @@
 {
     "ffmpeg" : {
-        "version" : "4.2.2",
+        "version" : "4.2.2 x64",
         "url" : "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.2-win64-static.zip"
     },
     "threads":
