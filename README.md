@@ -13,16 +13,28 @@ Download and install any ```3.X``` python versions.
 Run the following command in the command prompt.
 
 ```bash
-pip install youtube-dl tqdm
+pip install tqdm
 ```
 
 ### Step 3
 
+#### Option 1
+
 Download and extract [ffmpeg.exe](https://ffmpeg.org/) in the same directory as main.py
+
+Install [youtube-dl](https://github.com/ytdl-org/youtube-dl) by running
+
+```bash
+pip install youtube-dl
+```
+
+#### Option 2
+
+Run main.py and it will prompt you to download and install both of them.
 
 ## Usage
 
-If you know your computer is old, change the **```max_..._thread_count```** variables to **```1```** or **```2```**.
+If your computer is old, change the **thread** variables to **```1```** in config.json .
 
 Add your links in **```download.txt```** one per line.
 

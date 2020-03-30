@@ -1,58 +1,10 @@
 import os
 import sys
-import threading
-import subprocess
 import tqdm
-
-max_FFMPEG_thread_count = 4
-max_download_thread_count = 4
-
-location = os.getcwd()
-down_location = location + "\\download\\"
-if not os.path.isdir(down_location):
-    os.mkdir(down_location)
-conv_location = location + "\\converted\\"
-if not os.path.isdir(conv_location):
-    os.mkdir(conv_location)
-ffmpeg_location = location + "\\ffmpeg.exe"
-
-youtubedl_path = '\\'.join(sys.executable.split(
-    "\\")[:-1]) + "\\Scripts\\youtube-dl.exe"
+from threads import FFMPEGThread, DownloadThread
 
 
-class FFMPEGThread(threading.Thread):
-    def __init__(self, file, thread_list, tqd):
-        threading.Thread.__init__(self)
-        self.file = file
-        self.thread_list = thread_list
-        self.tqd = tqd
-
-    def run(self):
-        ffmpegargs = " -y -f avi -r 29.97 -vcodec libxvid -vtag xvid -vf scale=704:-1 -aspect 16:9 -maxrate 8000k -b:v 6000k -qmin 3 -qmax 5 -bufsize 4096 -mbd 2 -bf 2 -trellis 1 -flags +aic -cmp 2 -subcmp 2 -g 300 -acodec ac3 -ar 48000 -aq 2"
-        inp = down_location + self.file
-        out = conv_location + self.file.split(".")[0]+".divx"
-        to_run = "{0} -i \"{1}\"".format(ffmpeg_location,
-                                         inp) + ffmpegargs + " \"{0}\"".format(out)
-        subprocess.call(to_run, stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL)
-        os.remove(self.file)
-        self.tqd.update(1)
-        self.thread_list.remove(self)
-
-
-class DownloadThread(threading.Thread):
-    def __init__(self, url, thread_list, tqd):
-        threading.Thread.__init__(self)
-        self.url = url
-        self.thread_list = thread_list
-        self.tqd = tqd
-
-    def run(self):
-        to_run = "{} --no-playlist {}".format(youtubedl_path, self.url)
-        subprocess.call(to_run, stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL)
-        self.tqd.update(1)
-        self.thread_list.remove(self)
+config = {}
 
 
 def run_threads(input, thread, thread_count):
@@ -61,7 +13,7 @@ def run_threads(input, thread, thread_count):
     tqd = tqdm.tqdm(total=len(input))
     while len(input) > current_index:
         if len(threads) < thread_count:
-            T = thread(input[current_index], threads, tqd)
+            T = thread(input[current_index], threads, tqd, config)
             current_index += 1
             T.start()
             threads.append(T)
@@ -72,27 +24,102 @@ def run_threads(input, thread, thread_count):
 
 
 def convert():
-    files = os.listdir(down_location)
-    run_threads(files, FFMPEGThread, max_FFMPEG_thread_count)
+    files = os.listdir(config["locations"]["download"])
+    run_threads(files, FFMPEGThread,
+                config["threads"]["ffmpeg"])
 
 
 def download_from_file():
-    os.chdir(down_location)
+    os.chdir(config["locations"]["download"])
     urls = []
     with open("..\\download.txt", "r") as url_file:
         urls = url_file.readlines()
     urls = [url.strip("\n") for url in urls]
-    run_threads(urls, DownloadThread, max_download_thread_count)
+    run_threads(urls, DownloadThread,
+                config["threads"]["download"])
+
+
+def load_config():
+    global config
+    location = os.getcwd()
+    from json import load
+    with open("config.json") as config_file:
+        config = load(config_file)
+    config["locations"] = {}
+    config["locations"]["download"] = location + "\\download\\"
+    config["locations"]["convert"] = location + "\\converted\\"
+    config["locations"]["ffmpeg"] = location + "\\ffmpeg.exe"
+    config["locations"]["youtube_dl"] = '\\'.join(
+        sys.executable.split("\\")[:-1]) + "\\Scripts\\youtube-dl.exe"
+
+    if not os.path.isdir(config["locations"]["download"]):
+        os.mkdir(config["locations"]["download"])
+    if not os.path.isdir(config["locations"]["convert"]):
+        os.mkdir(config["locations"]["convert"])
+
+
+def download_and_unzip_ffmpeg():
+    import urllib.request
+    from zipfile import ZipFile
+    from shutil import copyfileobj
+    req = urllib.request.Request(
+        config["ffmpeg"]["url"],
+        headers={
+            "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0"
+        }
+    )
+    response = urllib.request.urlopen(req)
+    with open ("ffmpeg.zip", "wb") as f:
+        copyfileobj(response, f)
+    with ZipFile("ffmpeg.zip") as zip_file:
+        source = zip_file.open("ffmpeg-4.2.2-win64-static/bin/ffmpeg.exe")
+        target = open("ffmpeg.exe", "wb")
+        copyfileobj(source, target)
+        source.close()
+        target.close()
+
+    response.close()
+    os.remove("ffmpeg.zip")
+
+
+def ffmpeg():
+    if os.path.exists(config["locations"]["ffmpeg"]):
+        return
+
+    answer = input(
+        "You need to have ffmpeg.exe in the same folder as this script.\nDo you want me to download it for you? [Y]/n:")
+    if(answer.lower() == "n"):
+        print("The url you're looking for is https://www.ffmpeg.org/download.html")
+
+    print("Warning! This script will download the ffmepg {} , if you have an older version of Windows please download it manually.".format(
+        config["ffmpeg"]["version"]))
+    answer = input("Do you wish to continue? [Y]/n:")
+    if(answer.lower() == "n"):
+        print("The url you're looking for is https://www.ffmpeg.org/download.html")
+        sys.exit(1)
+    download_and_unzip_ffmpeg()
+
+
+def youtube_dl():
+    if os.path.exists(config["locations"]["youtube_dl"]):
+        return
+
+    answer = input(
+        "You don't have youtube-dl installed. \nDo you want me to install it for you? [Y]/n:")
+    if(answer.lower() == "n"):
+        print("Install it by running \"pip install youtube-dl\"")
+        sys.exit(1)
+
+    print("Installing youtube-dl")
+    to_run = "pip install youtube-dl"
+    import subprocess
+    subprocess.call(to_run)
 
 
 if __name__ == "__main__":
-    if not os.path.exists(ffmpeg_location):
-        print("FFMPEG.exe needs to be in the same folder as this script.")
-        sys.exit(1)
-
-    if not os.path.exists(youtubedl_path):
-        print("You need to run pip install youtube-dl")
-        sys.exit(1)
+    load_config()
+    ffmpeg()
+    youtube_dl()
     print("Downloading")
     download_from_file()
     print("Converting")
